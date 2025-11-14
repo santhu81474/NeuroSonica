@@ -1,0 +1,1152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NeuroSonica⚡</title>
+
+    <script src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
+
+    <style>
+        /* --- Global Styles & Variables --- */
+        :root {
+            /* Neon Noir Theme */
+            --bg-color-dark: #0a031a;
+            --bg-color-light: #1a0529;
+            --surface-color: rgba(30, 30, 50, 0.4);
+            --glass-border: rgba(255, 255, 255, 0.1);
+            
+            /* Mood Colors */
+            --color-happy: #00ff9a;
+            --color-sad: #00bfff;
+            --color-angry: #ff1f1f;
+            --color-neutral: #00e0e0; /* Cyan */
+            --color-surprised: #f0f; /* Magenta */
+            --color-disgusted: #bfff00; /* Lime */
+            --color-fearful: #ff9a00; /* Orange */
+
+            --text-color: #f0f0f5;
+            --text-muted: #a0a0b5;
+            --border-radius: 12px;
+            --shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+        }
+
+        *, *::before, *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        html, body {
+            height: 100%;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-color-dark);
+            background-image: radial-gradient(circle at 50% 50%, var(--bg-color-light) 0%, var(--bg-color-dark) 70%);
+            color: var(--text-color);
+            line-height: 1.6;
+            overflow: hidden;
+            position: relative;
+        }
+
+        /* --- Dynamic Glowing Lights (Simulation) --- */
+        body::before, body::after {
+            content: '';
+            position: fixed;
+            z-index: -1;
+            filter: blur(100px);
+            opacity: 0.3;
+            animation: pulse 8s infinite alternate;
+        }
+        body::before {
+            width: 300px;
+            height: 300px;
+            left: -50px;
+            bottom: -50px;
+            background: linear-gradient(45deg, var(--color-surprised), var(--color-neutral));
+            animation-delay: -4s;
+        }
+        body::after {
+            width: 200px;
+            height: 200px;
+            right: -30px;
+            top: 0;
+            background: linear-gradient(-45deg, var(--color-sad), var(--color-neutral));
+        }
+
+        @keyframes pulse {
+            0% { opacity: 0.2; transform: scale(0.9); }
+            100% { opacity: 0.4; transform: scale(1.1); }
+        }
+
+        /* --- LOADER/SPLASH SCREEN (Aesthetic) --- */
+        #splash-screen {
+            position: fixed;
+            inset: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background-color: var(--bg-color-dark);
+            z-index: 100;
+            transition: opacity 1s ease-out; /* Slower fade out */
+            text-align: center;
+        }
+
+        /* --- NEW: CSS for Particle Canvas on Splash Screen --- */
+        #particle-splash-canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1; /* Sits behind text/chars, but above orb bg */
+        }
+        /* --- End of New CSS --- */
+
+
+        #splash-screen h1 {
+            font-size: 4rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 5px;
+            color: var(--text-color);
+            text-shadow: 0 0 15px var(--color-neutral), 0 0 30px var(--color-neutral);
+            margin-bottom: 0.5rem;
+            animation: fadeIn 2s ease-out;
+            position: relative; /* For z-index of characters */
+            z-index: 10;
+        }
+
+        #splash-screen p {
+            font-size: 1.5rem;
+            color: var(--text-muted);
+            margin-bottom: 3rem;
+            animation: fadeIn 2s ease-out 0.5s both;
+            position: relative; /* For z-index of characters */
+            z-index: 10;
+        }
+
+        #enter-button {
+            background: linear-gradient(45deg, var(--color-surprised), var(--color-neutral));
+            border: none;
+            padding: 1.2rem 3rem;
+            border-radius: 50px;
+            color: var(--bg-color-dark);
+            font-size: 1.4rem;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            cursor: pointer;
+            box-shadow: 0 0 20px rgba(240, 0, 240, 0.5), 0 0 40px rgba(0, 224, 224, 0.3);
+            transition: all 0.3s ease;
+            animation: scaleIn 1s ease-out 1s both;
+            position: relative; /* For z-index of characters */
+            z-index: 10;
+        }
+
+        #enter-button:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 30px rgba(240, 0, 240, 0.7), 0 0 60px rgba(0, 224, 224, 0.5);
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes scaleIn {
+            from { opacity: 0; transform: scale(0.8); }
+            to { opacity: 1; transform: scale(1); }
+        }
+
+        /* --- Minimal background animation orb --- */
+        #splash-screen::before {
+            content: '';
+            position: absolute;
+            width: 400px;
+            height: 400px;
+            background: radial-gradient(circle at center, rgba(0, 224, 224, 0.2) 0%, transparent 70%);
+            border-radius: 50%;
+            animation: floatOrb 15s ease-in-out infinite alternate;
+            z-index: -1;
+            filter: blur(80px);
+            opacity: 0.4;
+        }
+        @keyframes floatOrb {
+            0% { transform: translate(-50%, -50%) scale(1); }
+            50% { transform: translate(50%, 50%) scale(1.1); }
+            100% { transform: translate(-50%, -50%) scale(1); }
+        }
+
+        /* Class for fading out the splash screen */
+        .fade-out {
+            opacity: 0 !important;
+            visibility: hidden;
+        }
+
+        /* --- NEW: Anime Characters on Splash Screen --- */
+        .anime-character {
+            position: absolute;
+            width: 150px; /* Adjust size as needed */
+            height: 150px;
+            background-size: contain;
+            background-repeat: no-repeat;
+            pointer-events: auto; /* Allow hover */
+            transition: transform 0.2s ease-out;
+            z-index: 5; /* Below text, above orb AND particle canvas */
+            animation: characterFloat 10s ease-in-out infinite alternate;
+            cursor: pointer;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start; /* Position headphones above head */
+            
+            /* --- NEW: Glowing Effect --- */
+            filter: drop-shadow(0 0 8px rgba(0, 224, 224, 0.5));
+            background-color: rgba(25, 25, 25, 0.6); /* 60% transparent dark grey */
+            border-radius: 50%;
+            border: 1px solid var(--glass-border);
+        }
+
+        .anime-character:hover {
+            transform: translateY(-10px) scale(1.05); /* Bounce effect */
+            filter: drop-shadow(0 0 15px var(--color-happy)); /* Brighter glow on hover */
+        }
+
+
+        /* --- UPDATED: Correct Image URLs --- */
+        #char1 {
+            background-image: url('anime2-removebg-preview.png');
+            top: 15%;
+            left: 10%;
+            animation-delay: 0s;
+        }
+        #char2 {
+            background-image: url('anime1-removebg-preview.png');
+            top: 15%;
+            right: 10%;
+            animation-delay: -3s;
+        }
+        #char3 {
+            background-image: url('anilefto-removebg-preview.png');
+            bottom: 15%;
+            left: 20%;
+            animation-delay: -6s;
+        }
+        #char4 {
+            background-image: url('aniright-removebg-preview.png');
+            bottom: 15%;
+            right: 20%;
+            animation-delay: -9s;
+        }
+
+        @keyframes characterFloat {
+            0% { transform: translateY(0) rotate(0deg); }
+            25% { transform: translateY(-5px) rotate(1deg); }
+            50% { transform: translateY(0) rotate(0deg); }
+            75% { transform: translateY(5px) rotate(-1deg); }
+            100% { transform: translateY(0) rotate(0deg); }
+        }
+
+
+        /* NEW: Split the rotation for the Aura Ring */
+        @keyframes spin-border {
+            to { transform: rotate(360deg); }
+        }
+        
+        /* --- Main App Layout --- */
+        #app {
+            display: none; /* Hidden by default */
+            height: 100%;
+            padding: 1.5rem;
+            gap: 1.5rem;
+            grid-template-rows: auto 1fr auto;
+            grid-template-areas:
+                "header"
+                "main"
+                "footer";
+            opacity: 0; /* Starts hidden, fades in */
+            transition: opacity 1s ease-in;
+        }
+
+        header {
+            grid-area: header;
+            text-align: center;
+        }
+
+        header h1 {
+            color: var(--text-color);
+            font-size: 2rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        main {
+            grid-area: main;
+            display: grid;
+            grid-template-columns: 3fr 4fr 3fr;
+            gap: 1.5rem;
+            overflow: hidden;
+            height: 100%;
+        }
+
+        footer {
+            grid-area: footer;
+            text-align: center;
+            font-size: 0.8rem;
+            color: var(--text-muted);
+        }
+        
+        /* --- Frosted Glass Sidecars --- */
+        .sidecar {
+            background-color: var(--surface-color);
+            backdrop-filter: blur(15px);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--border-radius);
+            padding: 1.5rem;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            height: 100%;
+            box-shadow: var(--shadow);
+            transition: transform 0.5s ease, opacity 0.5s ease;
+        }
+
+        .sidecar h2 {
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 1px solid var(--glass-border);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        /* --- Language Selector --- */
+        #language-select {
+            background-color: var(--surface-color);
+            color: var(--text-color);
+            border: 1px solid var(--glass-border);
+            border-radius: 6px;
+            padding: 0.5rem;
+            font-size: 0.9rem;
+            width: 100%;
+            margin-bottom: 1rem;
+            appearance: none; /* Remove default arrow */
+            background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23f0f0f5%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13%205.1L146.2%20200.7%2018.6%2074.5a17.6%2017.6%200%200%200-25.3%200%2017.6%2017.6%200%200%200%200%2025.3l135.2%20135.2c6.8%206.8%2017.8%206.8%2024.6%200l135.2-135.2c6.9-6.9%206.9-17.9%200-24.8a17.6%2017.6%200%200%200-12.9-5.1z%22%2F%3E%3C%2Fsvg%3E');
+            background-repeat: no-repeat;
+            background-position: right 0.7em top 50%, 0 0;
+            background-size: 0.65em auto, 100%;
+        }
+        #language-select:focus {
+            outline: 1px solid var(--color-neutral);
+            border-color: var(--color-neutral);
+        }
+        option {
+            background-color: var(--bg-color-dark);
+            color: var(--text-color);
+        }
+
+        /* --- Mood Detection Hub (Center) --- */
+        #mood-hub {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 1.5rem;
+        }
+
+        /* The Aura Ring */
+        #aura-ring {
+            position: relative;
+            width: 100%;
+            max-width: 400px;
+            aspect-ratio: 1 / 1;
+            border-radius: 50%;
+            overflow: hidden;
+            border: 3px solid transparent; /* Base transparent border */
+            box-shadow: 0 0 10px 0 transparent;
+            transition: border-color 0.5s ease, box-shadow 0.5s ease;
+            background-color: #000;
+        }
+
+        /* Inner element for the rotating border */
+        #aura-ring::before {
+            content: '';
+            position: absolute;
+            inset: -3px; /* Extends past the main div to act as the border */
+            border-radius: 50%;
+            border: 3px solid transparent; /* The actual animated border */
+            background: conic-gradient(from 0deg, var(--color-neutral), var(--bg-color-dark) 30%, var(--bg-color-dark));
+            mask: radial-gradient(farthest-side, transparent calc(100% - 3px), black calc(100% - 2px)); /* Creates a hole in the middle */
+            -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 3px), black calc(100% - 2px));
+            animation: none; /* No animation by default */
+            z-index: 1; /* Above video */
+            pointer-events: none; /* Don't block video interaction */
+        }
+        /* When loading, apply the spin animation to the pseudo-element */
+        #aura-ring.loading::before {
+            animation: spin-border 2s linear infinite;
+        }
+        /* When a mood is detected, hide the rotating border and apply solid border to main div */
+        #aura-ring:not(.loading)::before {
+            display: none; /* Hide the rotating pseudo-element */
+        }
+
+        /* Dynamic Border States for aura-ring (main div) */
+        #aura-ring.happy {
+            border-color: var(--color-happy);
+            box-shadow: 0 0 20px 5px var(--color-happy);
+        }
+        #aura-ring.sad {
+            border-color: var(--color-sad);
+            box-shadow: 0 0 20px 5px var(--color-sad);
+        }
+        #aura-ring.angry {
+            border-color: var(--color-angry);
+            box-shadow: 0 0 20px 5px var(--color-angry);
+        }
+        #aura-ring.neutral {
+            border-color: var(--color-neutral);
+            box-shadow: 0 0 20px 5px var(--color-neutral);
+        }
+        #aura-ring.surprised {
+            border-color: var(--color-surprised);
+            box-shadow: 0 0 20px 5px var(--color-surprised);
+        }
+        #aura-ring.disgusted {
+            border-color: var(--color-disgusted);
+            box-shadow: 0 0 20px 5px var(--color-disgusted);
+        }
+        #aura-ring.fearful {
+            border-color: var(--color-fearful);
+            box-shadow: 0 0 20px 5px var(--color-fearful);
+        }
+
+
+        #video, #canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            /* CRITICAL FIX: The video itself should NOT transform rotationally */
+            transform: scaleX(-1); /* Only mirror horizontally, no rotation */
+            transition: opacity 0.3s ease;
+            z-index: 0; /* Below the pseudo-element border */
+        }
+        /* Class to hide video when paused */
+        #video.paused {
+            opacity: 0.3;
+        }
+
+        /* --- NEW: Mood Character Image --- */
+        #mood-character {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: contain; /* Use contain to see the whole character */
+            padding: 20px; /* Give it some space from the edge */
+            z-index: 2; /* Above video, below border */
+            opacity: 0;
+            transition: opacity 0.5s ease;
+            pointer-events: none; /* Don't block anything */
+        }
+        
+        #aura-ring.mood-locked #video {
+            opacity: 0; /* Fade video even more */
+        }
+        #aura-ring.mood-locked #mood-character {
+            opacity: 2; /* Show the character */
+        }
+
+
+        /* Mood Label */
+        #mood-label {
+            font-size: 1.2rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--text-muted);
+        }
+        #mood-label span {
+            transition: color 0.5s ease;
+        }
+
+        /* --- Rescan Button --- */
+        #rescan-button {
+            display: none; /* Hidden by default */
+            width: 140px;
+            background-color: var(--surface-color);
+            color: var(--text-color);
+            border: 1px solid var(--glass-border);
+            letter-spacing: 1px;
+            font-size: 16px;
+            font-weight: bold;
+            padding: 0.5rem 1rem;
+            cursor: pointer;
+            border-radius: 50px;
+            transition: all 0.3s ease;
+        }
+        #rescan-button:hover {
+            border-color: var(--color-surprised);
+            color: var(--color-surprised);
+            box-shadow: 0 0 10px 0 var(--color-surprised);
+        }
+
+
+        /* --- Left Sidecar: "The Vibe" (Playlist) --- */
+        #left-sidecar.reloading {
+            transform: translateX(-20px);
+            opacity: 0.5;
+        }
+        
+        #song-list {
+            list-style: none;
+            overflow-y: auto;
+            flex-grow: 1;
+            scrollbar-width: thin;
+            scrollbar-color: var(--color-neutral) var(--bg-color-dark);
+        }
+
+        .song-item {
+            display: grid;
+            grid-template-columns: auto 1fr auto;
+            align-items: center;
+            gap: 1rem;
+            padding: 0.75rem 0.5rem;
+            border-bottom: 1px solid var(--glass-border);
+            border-radius: 6px;
+            transition: background-color 0.2s ease;
+        }
+        .song-item:last-child {
+            border-bottom: none;
+        }
+        .song-item:hover {
+            background-color: var(--surface-color);
+        }
+        .song-item.loading-placeholder {
+            color: var(--text-muted); 
+            display: block;
+        }
+
+
+        .song-artwork {
+            width: 40px;
+            height: 40px;
+            border-radius: 4px;
+            object-fit: cover;
+        }
+        
+        .song-info {
+            overflow: hidden;
+        }
+        .song-title {
+            font-size: 0.9rem;
+            font-weight: 600;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .song-artist {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        
+        .play-btn {
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            font-size: 1.5rem;
+            cursor: pointer;
+            padding: 5px;
+            transition: color 0.2s ease, transform 0.2s ease;
+        }
+        .play-btn:hover {
+            color: var(--color-happy);
+            transform: scale(1.1);
+        }
+        .play-btn.playing {
+            color: var(--color-happy);
+        }
+
+        /* --- Right Sidecar: "The Deck" (Player) --- */
+        #right-sidecar {
+            text-align: center;
+        }
+        #now-playing-art {
+            width: 100%;
+            max-width: 250px;
+            aspect-ratio: 1 / 1;
+            border-radius: var(--border-radius);
+            object-fit: cover;
+            margin: 0 auto 1rem auto;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            background-color: #000;
+            opacity: 0;
+            transition: opacity 0.5s ease;
+        }
+        #now-playing-art.active {
+            opacity: 1;
+        }
+
+        #now-playing-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--text-color);
+            min-height: 1.2em;
+        }
+        #now-playing-artist {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            min-height: 1em;
+        }
+        
+        #audio-player {
+            display: none;
+        }
+
+        /* --- Responsive Design --- */
+        @media (max-width: 900px) {
+            body {
+                overflow: auto;
+                height: auto;
+            }
+            #app {
+                padding: 1rem;
+                gap: 1rem;
+                height: auto;
+            }
+            main {
+                grid-template-columns: 1fr;
+                height: auto;
+            }
+            #mood-hub { order: 1; }
+            #left-sidecar { order: 2; height: 400px; }
+            #right-sidecar { order: 3; }
+            header h1 { font-size: 1.5rem; }
+            footer { margin-top: 1rem; }
+
+            #splash-screen h1 { font-size: 3rem; }
+            #splash-screen p { font-size: 1.2rem; }
+            #enter-button { padding: 1rem 2rem; font-size: 1.2rem; }
+
+            .anime-character {
+                width: 100px;
+                height: 100px;
+                display: none; /* Hide on small screens for simplicity */
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="splash-screen">
+        <!-- NEW: Particle Canvas added here -->
+        <canvas id="particle-splash-canvas"></canvas>
+
+        <div id="char1" class="anime-character"><div class="headphones"></div></div>
+        <div id="char2" class="anime-character"><div class="headphones"></div></div>
+        <div id="char3" class="anime-character"><div class="headphones"></div></div>
+        <div id="char4" class="anime-character"><div class="headphones"></div></div>
+
+        <h1>NeuroSonica⚡</h1>
+        <p>Your AI-Powered Mood Music Companion</p>
+        <button id="enter-button">Enter</button>
+    </div>
+
+    <div id="app">
+        <header>
+            <h1>NeuroSonica⚡</h1>
+        </header>
+
+        <main>
+            <div id="left-sidecar" class="sidecar">
+                <h2><span id="vibe-icon">🎧</span>The Vibe</h2>
+                <select id="language-select">
+                    <option value="english">English</option>
+                    <option value="hindi">Hindi</option>
+                    <option value="kannada">Kannada</option>
+                </select>
+                <ul id="song-list">
+                </ul>
+            </div>
+
+            <div id="mood-hub">
+                <div id="aura-ring">
+                    <video id="video" autoplay muted playsinline></video>
+                    <canvas id="canvas"></canvas>
+                    <img id="mood-character" src="img1-removebg-preview.png" alt="Mood Character" />
+                </div>
+                <div id="mood-label">CURRENT VIBE: <span>SEARCHING...</span></div>
+                <button id="rescan-button">Rescan</button>
+            </div>
+
+            <div id="right-sidecar" class="sidecar">
+                <h2><span id="deck-icon">💿</span>The Deck</h2>
+                <img id="now-playing-art" src="" alt="Album Art">
+                <div id="now-playing-title">Select a song</div>
+                <div id="now-playing-artist">from the list</div>
+            </div>
+        </main>
+
+        <footer>
+            <p>🔒 Privacy First: hey flashman .</p>
+        </footer>
+    </div>
+
+    <audio id="audio-player"></audio>
+
+
+    <!-- NEW: Script for Splash Screen Particle Animation -->
+    <script>
+        // Use 'var' to make it globally accessible for cancellation
+        var particleAnimationId; 
+        
+        const particleSplashCanvas = document.getElementById('particle-splash-canvas');
+        const ctxSplash = particleSplashCanvas.getContext('2d');
+        
+        let particlesArraySplash;
+
+        // Particle class
+        class ParticleSplash {
+            constructor(x, y, directionX, directionY, size, color) {
+                this.x = x;
+                this.y = y;
+                this.directionX = directionX;
+                this.directionY = directionY;
+                this.size = size;
+                this.color = color;
+            }
+
+            // Method to draw individual particle
+            draw() {
+                ctxSplash.beginPath();
+                ctxSplash.arc(this.x, this.y, this.size, 0, Math.PI * 2, false);
+                // Updated color to match NeuroSonica theme
+                ctxSplash.fillStyle = 'rgba(0, 224, 224, 0.2)'; // Use --color-neutral
+                ctxSplash.fill();
+            }
+
+            // Method to update particle position
+            update() {
+                if (this.x > particleSplashCanvas.width || this.x < 0) {
+                    this.directionX = -this.directionX;
+                }
+                if (this.y > particleSplashCanvas.height || this.y < 0) {
+                    this.directionY = -this.directionY;
+                }
+                this.x += this.directionX;
+                this.y += this.directionY;
+                this.draw();
+            }
+        }
+
+        // Create particle array
+        function initParticles() {
+            particleSplashCanvas.width = window.innerWidth;
+            particleSplashCanvas.height = window.innerHeight;
+            particlesArraySplash = [];
+            let numberOfParticles = (particleSplashCanvas.height * particleSplashCanvas.width) / 9000;
+            for (let i = 0; i < numberOfParticles; i++) {
+                let size = (Math.random() * 2) + 1;
+                let x = (Math.random() * ((innerWidth - size * 2) - (size * 2)) + size * 2);
+                let y = (Math.random() * ((innerHeight - size * 2) - (size * 2)) + size * 2);
+                let directionX = (Math.random() * 0.4) - 0.2;
+                let directionY = (Math.random() * 0.4) - 0.2;
+                let color = 'rgba(0, 224, 224, 0.2)'; // Use --color-neutral
+                particlesArraySplash.push(new ParticleSplash(x, y, directionX, directionY, size, color));
+            }
+        }
+
+        // Animation loop
+        function animateParticles() {
+            particleAnimationId = requestAnimationFrame(animateParticles);
+            ctxSplash.clearRect(0, 0, innerWidth, innerHeight);
+
+            for (let i = 0; i < particlesArraySplash.length; i++) {
+                particlesArraySplash[i].update();
+            }
+            connectParticles();
+        }
+
+        // Function to draw lines between nearby particles
+        function connectParticles() {
+            let opacityValue = 1;
+            let connectionDistance = 150;
+            for (let a = 0; a < particlesArraySplash.length; a++) {
+                for (let b = a; b < particlesArraySplash.length; b++) {
+                    let distance = ((particlesArraySplash[a].x - particlesArraySplash[b].x) * (particlesArraySplash[a].x - particlesArraySplash[b].x)) +
+                                   ((particlesArraySplash[a].y - particlesArraySplash[b].y) * (particlesArraySplash[a].y - particlesArraySplash[b].y));
+                    
+                    if (distance < (connectionDistance * connectionDistance)) {
+                        opacityValue = 1 - (distance / (connectionDistance * connectionDistance));
+                        // Updated color to match NeuroSonica theme
+                        ctxSplash.strokeStyle = 'rgba(0, 224, 224, ' + opacityValue * 0.15 + ')'; // Use --color-neutral
+                        ctxSplash.lineWidth = 1;
+                        ctxSplash.beginPath();
+                        ctxSplash.moveTo(particlesArraySplash[a].x, particlesArraySplash[a].y);
+                        ctxSplash.lineTo(particlesArraySplash[b].x, particlesArraySplash[b].y);
+                        ctxSplash.stroke();
+                    }
+                }
+            }
+        }
+
+        // Resize event handler
+        window.addEventListener('resize', () => {
+            // Only resize if the splash screen is still visible
+            if (splashScreen.style.display !== 'none') {
+                particleSplashCanvas.width = innerWidth;
+                particleSplashCanvas.height = innerHeight;
+                initParticles();
+            }
+        });
+
+        // Start animation
+        initParticles();
+        animateParticles();
+    </script>
+
+
+    <!-- Existing NeuroSonica App Script -->
+    <script>
+        // --- 1. DOM Element Selection (Updated for Aura UI) ---
+        const splashScreen = document.getElementById('splash-screen');
+        const enterButton = document.getElementById('enter-button');
+        const app = document.getElementById('app');
+        const video = document.getElementById('video');
+        const canvas = document.getElementById('canvas');
+        const songList = document.getElementById('song-list');
+        const audioPlayer = document.getElementById('audio-player');
+        
+        // Aura UI Elements
+        const auraRing = document.getElementById('aura-ring');
+        const moodLabel = document.getElementById('mood-label');
+        const vibeIcon = document.getElementById('vibe-icon');
+        const leftSidecar = document.getElementById('left-sidecar');
+        const nowPlayingArt = document.getElementById('now-playing-art');
+        const nowPlayingTitle = document.getElementById('now-playing-title');
+        const nowPlayingArtist = document.getElementById('now-playing-artist');
+        
+        // NEW: Mood character
+        const moodCharacter = document.getElementById('mood-character');
+
+        // Main app selectors
+        const rescanButton = document.getElementById('rescan-button');
+        const languageSelect = document.getElementById('language-select');
+
+        // --- 2. State and Constants ---
+        const MODEL_URL = 'https://cdn.jsdelivr.net/gh/justadudewhohacks/face-api.js@0.22.2/weights';
+        let currentMood = null;
+        let detectionInterval;
+        let currentPlayingButton = null;
+        let modelsLoaded = false;
+
+        const MOOD_QUERY_MAP = {
+            neutral: 'chill', happy: 'happy pop', sad: 'sad acoustic', angry: 'angry rock',
+            surprised: 'upbeat', disgusted: 'punk', fearful: 'ambient'
+        };
+        const MOOD_DISPLAY_MAP = {
+            neutral: { emoji: '😐', label: 'Neutral', color: 'var(--color-neutral)', class: 'neutral' },
+            happy: { emoji: '😄', label: 'Happy', color: 'var(--color-happy)', class: 'happy' },
+            sad: { emoji: '😢', label: 'Sad', color: 'var(--color-sad)', class: 'sad' },
+            angry: { emoji: '😠', label: 'Angry', color: 'var(--color-angry)', class: 'angry' },
+            surprised: { emoji: '😮', label: 'Surprised', color: 'var(--color-surprised)', class: 'surprised' },
+            disgusted: { emoji: '🤢', label: 'Disgusted', color: 'var(--color-disgusted)', class: 'disgusted' },
+            fearful: { emoji: '😨', label: 'Fearful', color: 'var(--color-fearful)', class: 'fearful' }
+        };
+
+        // --- 3. App Initialization ---
+
+        window.onload = async () => {
+            enterButton.disabled = true; // Disable until models are loaded
+            enterButton.textContent = "Loading Models...";
+            console.log("Loading AI models...");
+            try {
+                await Promise.all([
+                    faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL),
+                    faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL),
+                    faceapi.nets.faceExpressionNet.loadFromUri(MODEL_URL)
+                ]);
+                console.log("Models loaded successfully.");
+                modelsLoaded = true;
+                enterButton.disabled = false;
+                enterButton.textContent = "Enter";
+            } catch (error) {
+                console.error("Failed to load models:", error);
+                enterButton.textContent = "Error Loading";
+                enterButton.style.backgroundColor = 'red';
+            }
+        };
+
+        enterButton.addEventListener('click', async () => {
+            if (!modelsLoaded) return;
+
+            // Fade out splash screen
+            splashScreen.classList.add('fade-out');
+            
+            // Wait for fade out, then hide splash and show app
+            setTimeout(async () => {
+                // --- NEW: Stop the splash screen particle animation ---
+                if (typeof particleAnimationId !== 'undefined') {
+                    cancelAnimationFrame(particleAnimationId);
+                }
+                // --- End of New Line ---
+
+                splashScreen.style.display = 'none';
+                app.style.display = 'grid';
+                app.style.opacity = 1; // Fade in main app
+
+                try {
+                    const stream = await navigator.mediaDevices.getUserMedia({ video: {} });
+                    video.srcObject = stream;
+                    video.addEventListener('loadedmetadata', () => {
+                        // Ensure video is ready before starting detection
+                        startDetection();
+                    }, { once: true });
+                } catch (err) {
+                    console.error("Failed to get camera:", err);
+                    alert("Could not access your camera. Please enable permissions and refresh.");
+                }
+            }, 1000); // Match CSS transition duration for splash-screen fade-out
+
+            // Add event listeners for main app functionality
+            rescanButton.addEventListener('click', startDetection);
+            languageSelect.addEventListener('change', () => {
+                if (currentMood) {
+                    getSongSuggestions(currentMood);
+                }
+            });
+        });
+
+        // --- 4. Face Detection Loop (Updated Logic) ---
+
+        function startDetection() {
+            console.log("Starting detection...");
+            video.play();
+            video.classList.remove('paused');
+            
+            // --- NEW: Hide character image ---
+            auraRing.classList.remove('mood-locked');
+            
+            updateMoodUI(null); 
+            rescanButton.style.display = 'none';
+            
+            if (detectionInterval) clearInterval(detectionInterval);
+
+            detectionInterval = setInterval(async () => {
+                try {
+                    const detections = await faceapi.detectSingleFace(
+                        video, 
+                        new faceapi.TinyFaceDetectorOptions({ scoreThreshold: 0.5 })
+                    ).withFaceLandmarks().withFaceExpressions();
+
+                    if (detections) {
+                        const primaryMood = getPrimaryMood(detections.expressions);
+                        
+                        if (primaryMood) {
+                            console.log("Mood Detected:", primaryMood);
+                            currentMood = primaryMood;
+                            updateMoodUI(currentMood);
+                            getSongSuggestions(currentMood);
+                            stopDetection();
+                        }
+                    } 
+                } catch (error) {
+                    console.error("Error during detection:", error);
+                }
+            }, 500); 
+        }
+        
+        function stopDetection() {
+            console.log("Stopping detection.");
+            if (detectionInterval) {
+                clearInterval(detectionInterval);
+                detectionInterval = null;
+            }
+            video.pause();
+            video.classList.add('paused');
+            
+            // --- NEW: Show character image ---
+            auraRing.classList.add('mood-locked');
+            
+            rescanButton.style.display = 'inline-flex';
+        }
+
+        function getPrimaryMood(expressions) {
+            if (!expressions) return null;
+            return Object.keys(expressions).reduce((a, b) => expressions[a] > expressions[b] ? a : b);
+        }
+
+        function updateMoodUI(mood) {
+            auraRing.className = 'aura-ring'; /* Reset classes first */
+            
+            if (mood && MOOD_DISPLAY_MAP[mood]) {
+                const { emoji, label, color, class: moodClass } = MOOD_DISPLAY_MAP[mood];
+                auraRing.classList.add(moodClass);
+                moodLabel.innerHTML = `CURRENT VIBE: <span style="color: ${color}">${label}</span>`;
+                vibeIcon.textContent = emoji;
+            } else {
+                auraRing.classList.add('loading');
+                moodLabel.innerHTML = `CURRENT VIBE: <span>SEARCHING...</span>`;
+                vibeIcon.textContent = '🎧';
+            }
+        }
+
+        // --- 5. Song Fetching & Display (Updated) ---
+
+        async function getSongSuggestions(mood) {
+            if (!mood) return;
+
+            const lang = languageSelect.value;
+            const baseQuery = MOOD_QUERY_MAP[mood] || mood;
+            const finalQuery = (lang === 'english') ? baseQuery : `${baseQuery} ${lang}`;
+
+            songList.innerHTML = `<li class="song-item loading-placeholder">Searching for ${finalQuery} songs...</li>`;
+            
+            leftSidecar.classList.add('reloading');
+            
+            console.log(`Fetching songs for mood: ${mood} (Query: ${finalQuery})`);
+            
+            const proxyUrl = "https://api.allorigins.win/raw?url="; 
+            const proxiedDeezerUrl = `${proxyUrl}${encodeURIComponent(`https://api.deezer.com/search?q=${finalQuery}&limit=10`)}`;
+            const iTunesUrl = `https://itunes.apple.com/search?term=${finalQuery}&media=music&entity=song&limit=10`;
+            
+            try {
+                const [deezerResponse, iTunesResponse] = await Promise.all([
+                    fetch(proxiedDeezerUrl).then(res => res.ok ? res.json() : { data: [] }).catch(() => ({ data: [] })),
+                    fetch(iTunesUrl).then(res => res.ok ? res.json() : { results: [] }).catch(() => ({ results: [] }))
+                ]);
+
+                const deezerSongs = parseDeezerResponse(deezerResponse);
+                const iTunesSongs = parseITunesResponse(iTunesResponse);
+
+                let allSongs = [...deezerSongs, ...iTunesSongs];
+                let uniqueSongs = [...new Map(allSongs.map(s => [s.title.toLowerCase(), s])).values()];
+                let finalSongs = uniqueSongs.sort(() => 0.5 - Math.random()).slice(0, 10); 
+
+                displaySongs(finalSongs);
+
+            } catch (error) {
+                console.error("Failed to fetch songs:", error);
+                songList.innerHTML = `<li class="song-item loading-placeholder">Could not fetch songs.</li>`;
+            } finally {
+                setTimeout(() => leftSidecar.classList.remove('reloading'), 200);
+            }
+        }
+
+        function parseDeezerResponse(data) {
+            if (!data || !data.data) return [];
+            return data.data.map(song => ({
+                title: song.title_short,
+                artist: song.artist.name,
+                previewUrl: song.preview,
+                artworkUrl: song.album.cover_medium
+            })).filter(s => s.previewUrl);
+        }
+
+        function parseITunesResponse(data) {
+            if (!data || !data.results) return [];
+            return data.results.map(song => ({
+                title: song.trackName,
+                artist: song.artistName,
+                previewUrl: song.previewUrl,
+                artworkUrl: song.artworkUrl100
+            })).filter(s => s.previewUrl);
+        }
+
+
+        function displaySongs(songs) {
+            songList.innerHTML = '';
+            
+            if (songs.length === 0) {
+                songList.innerHTML = `<li class="song-item loading-placeholder">No songs found for this mood.</li>`;
+                return;
+            }
+
+            songs.forEach(song => {
+                const li = document.createElement('li');
+                li.className = 'song-item';
+                li.innerHTML = `
+                    <img src="${song.artworkUrl}" alt="Album Art" class="song-artwork">
+                    <div class="song-info">
+                        <div class="song-title">${song.title}</div>
+                        <div class="song-artist">${song.artist}</div>
+                    </div>
+                    <button class="play-btn" 
+                        data-url="${song.previewUrl}" 
+                        data-art="${song.artworkUrl}"
+                        data-title="${song.title}"
+                        data-artist="${song.artist}"
+                        title="Play Preview">▶</button>
+                `;
+                songList.appendChild(li);
+            });
+        }
+
+        // --- 6. Audio Player Logic ---
+
+        songList.addEventListener('click', (e) => {
+            const button = e.target.closest('.play-btn');
+            if (button) {
+                handlePlayPause(button);
+            }
+        });
+        
+
+        function handlePlayPause(button) {
+            const url = button.dataset.url;
+
+            if (currentPlayingButton === button) {
+                audioPlayer.pause();
+            } else {
+                if (currentPlayingButton) {
+                    currentPlayingButton.textContent = '▶';
+                    currentPlayingButton.classList.remove('playing');
+                }
+                
+                audioPlayer.src = url;
+                audioPlayer.play();
+                button.textContent = '❚❚';
+                button.classList.add('playing');
+                currentPlayingButton = button;
+
+                nowPlayingArt.src = button.dataset.art;
+                nowPlayingArt.classList.add('active');
+                nowPlayingTitle.textContent = button.dataset.title;
+                nowPlayingArtist.textContent = button.dataset.artist;
+            }
+        }
+        
+        audioPlayer.addEventListener('ended', () => {
+            if (currentPlayingButton) {
+                currentPlayingButton.textContent = '▶';
+                currentPlayingButton.classList.remove('playing');
+                currentPlayingButton = null;
+            }
+            nowPlayingArt.classList.remove('active');
+            nowPlayingTitle.textContent = "Select a song";
+            nowPlayingArtist.textContent = "from the list";
+        });
+
+        audioPlayer.addEventListener('pause', () => {
+            if (currentPlayingButton && audioPlayer.paused) {
+                 currentPlayingButton.textContent = '▶';
+                 currentPlayingButton.classList.remove('playing');
+                 currentPlayingButton = null;
+            }
+        });
+
+    </script>
+</body>
+</html>
